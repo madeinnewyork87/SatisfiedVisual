@@ -49,6 +49,7 @@ export const recipeData = {
       {name: 'Ficsite Trigon', inputs: {'Ficsite Ingot': 10}, outputs: {'Ficsite Trigon': 30}},
       {name: 'Hatcher Protein', inputs: {'Hatcher Remains': 20}, outputs: {'Alien Protein': 20}},
       {name: 'Hog Protein', inputs: {'Hog Remains': 20}, outputs: {'Alien Protein': 20}},
+      {name: 'Iron Pipe', inputs: {'Iron Ingot': 20}, outputs: {'Steel Pipe': 25}},
       {name: 'Iron Plate', inputs: {'Iron Ingot': 30}, outputs: {'Iron Plate': 20}},
       {name: 'Iron Rebar', inputs: {'Iron Rod': 15}, outputs: {'Iron Rebar': 15}},
       {name: 'Iron Rod', inputs: {'Iron Ingot': 15}, outputs: {'Iron Rod': 15}},
@@ -363,4 +364,5 @@ export const recipeData = {
     ]
   }
 };
+
 
