@@ -49,7 +49,6 @@ export const recipeData = {
       {name: 'Ficsite Trigon', inputs: {'Ficsite Ingot': 10}, outputs: {'Ficsite Trigon': 30}},
       {name: 'Hatcher Protein', inputs: {'Hatcher Remains': 20}, outputs: {'Alien Protein': 20}},
       {name: 'Hog Protein', inputs: {'Hog Remains': 20}, outputs: {'Alien Protein': 20}},
-      {name: 'Iron Pipe', inputs: {'Iron Ingot': 20}, outputs: {'Steel Pipe': 25}},
       {name: 'Iron Plate', inputs: {'Iron Ingot': 30}, outputs: {'Iron Plate': 20}},
       {name: 'Iron Rebar', inputs: {'Iron Rod': 15}, outputs: {'Iron Rebar': 15}},
       {name: 'Iron Rod', inputs: {'Iron Ingot': 15}, outputs: {'Iron Rod': 15}},
@@ -70,6 +69,7 @@ export const recipeData = {
       {name: 'Stun Rebar', inputs: {'Iron Rebar': 10}, outputs: {'Stun Rebar': 5}},
       {name: 'Wire', inputs: {'Copper Ingot': 15}, outputs: {'Wire': 30}},
       {name: 'Cast Screw', inputs: {'Iron Ingot': 12.5}, outputs: {'Screw': 50}, isAlternate: true},
+      {name: 'Iron Pipe', inputs: {'Iron Ingot': 20}, outputs: {'Steel Pipe': 25}, isAlternate: true},
       {name: 'Iron Wire', inputs: {'Iron Ingot': 12.5}, outputs: {'Wire': 22.5}, isAlternate: true},
       {name: 'Steel Rod', inputs: {'Steel Ingot': 12}, outputs: {'Iron Rod': 48}, isAlternate: true}
     ],
@@ -364,5 +364,6 @@ export const recipeData = {
     ]
   }
 };
+
 
 
