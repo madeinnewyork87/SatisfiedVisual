@@ -195,7 +195,7 @@ export const recipeData = {
       {name: 'Sloppy Alumina', inputs: {'Bauxite': 150, 'Water': 150}, outputs: {'Alumina Solution': 240}, isAlternate: true},
       {name: 'Sulfuric Uranium Extraction', inputs: {'Uranium': 20, 'Sulfuric Acid': 40}, outputs: {'Uranium Pellet': 60, 'Sulfuric Acid': 20}, isAlternate: true},
       {name: 'Turbofuel', inputs: {'Fuel': 22.5, 'Compacted Coal': 15}, outputs: {'Turbofuel': 18.75}},
-      {name: 'Turbo Heavy Fuel', inputs: {'Heavy Oil Residue': 40, 'Compacted Coal': 30}, outputs: {'Turbofuel': 30}, isAlternate: true},
+      {name: 'Turbo Heavy Fuel', inputs: {'Heavy Oil Residue': 37.5, 'Compacted Coal': 30}, outputs: {'Turbofuel': 30}, isAlternate: true},
       {name: 'Wet Concrete', inputs: {'Limestone': 120, 'Water': 100}, outputs: {'Concrete': 80}, isAlternate: true}
     ],
     'Packager': [
