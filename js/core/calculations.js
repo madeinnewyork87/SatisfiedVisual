@@ -50,20 +50,19 @@ export function updateCardCalculations(cardData) {
         if (outputEl) outputEl.textContent = cardData.outputs[name].toFixed(2);
     });
 
-    // --- DEFINITIVE POWER CALCULATION LOGIC ---
+    // --- DEFINITIVE POWER CALCULATION LOGIC (Satisfactory 1.0) ---
     const basePower = state.buildingsMap.get(building)?.power || 0;
     const isGenerator = basePower > 0;
 
     if (isGenerator) {
         // Generators produce power. The value is positive.
-        // The in-game overclock exponent for generators is ~1.321928
-        const powerExponent = 1.321928;
-        const overclockPowerMultiplier = Math.pow(clockSpeedMultiplier, powerExponent);
+        // In Satisfactory 1.0, overclocking for generators scales linearly
+        const overclockPowerMultiplier = clockSpeedMultiplier;
         cardData.power = round(Math.abs(basePower) * overclockPowerMultiplier * buildings, 3);
     } else if (basePower < 0) {
         // Consumers use power. The value is negative.
-        // The in-game overclock exponent for consumers is 1.6
-        const powerExponent = 1.6;
+        // In Satisfactory 1.0, the overclock exponent for consumers is 1.321928
+        const powerExponent = 1.321928;
         const overclockPowerMultiplier = Math.pow(clockSpeedMultiplier, powerExponent);
         const amplificationPowerMultiplier = Math.pow(outputMultiplier, 2);
         const totalConsumed = Math.abs(basePower) * overclockPowerMultiplier * amplificationPowerMultiplier * buildings;
@@ -96,28 +95,59 @@ export function updateCardCalculations(cardData) {
 
 /**
  * Simulates the factory network to identify and flag resource deficits.
+ * Correctly distributes supply proportionally if an output connects to multiple consumers.
  */
 export function calculateAndRenderNetworkStatus() {
-    // This first pass propagates deficits forward. A card with insufficient inputs
-    // will have its effective output reduced to 0 for subsequent calculations.
     let changed = true;
     const effectiveOutputs = new Map();
     state.placedCards.forEach(card => effectiveOutputs.set(card.id, {...card.outputs}));
 
     for (let i = 0; i < state.placedCards.size && changed; i++) {
         changed = false;
+        
+        // 1. Calculate the total required demand requested from each specific output port
+        const outputDemands = new Map();
+        state.connections.forEach(conn => {
+            const outputKey = `${conn.from.cardId}:${conn.from.itemName}`;
+            const consumerCard = state.placedCards.get(conn.to.cardId);
+            if (consumerCard) {
+                const required = consumerCard.inputs[conn.to.itemName] || 0;
+                outputDemands.set(outputKey, (outputDemands.get(outputKey) || 0) + required);
+            }
+        });
+
+        // 2. Distribute supply to consumers proportionally based on their demand vs total availability
+        const inputSupplies = new Map();
+        state.connections.forEach(conn => {
+            const outputKey = `${conn.from.cardId}:${conn.from.itemName}`;
+            const inputKey = `${conn.to.cardId}:${conn.to.itemName}`;
+            
+            const sourceOutputs = effectiveOutputs.get(conn.from.cardId);
+            if (sourceOutputs) {
+                const totalSupply = sourceOutputs[conn.from.itemName] || 0;
+                const totalDemand = outputDemands.get(outputKey) || 1; // Fallback to 1 to avoid division by zero
+                
+                const consumerCard = state.placedCards.get(conn.to.cardId);
+                const required = consumerCard ? (consumerCard.inputs[conn.to.itemName] || 0) : 0;
+                
+                let supplied = required;
+                // Distribute proportionally if the provider is over capacity
+                if (totalSupply < totalDemand) {
+                    supplied = required * (totalSupply / totalDemand);
+                }
+                
+                inputSupplies.set(inputKey, (inputSupplies.get(inputKey) || 0) + supplied);
+            }
+        });
+
+        // 3. Flag deficits and nullify downstream outputs if starved
         state.placedCards.forEach(card => {
             if (card.building === 'Alien Power Augmenter') return;
 
             let hasDeficit = false;
             Object.entries(card.inputs).forEach(([inputName, required]) => {
-                let supplied = 0;
-                state.connections.forEach(conn => {
-                    if (conn.to.cardId === card.id && conn.to.itemName === inputName) {
-                        const sourceOutputs = effectiveOutputs.get(conn.from.cardId);
-                        if(sourceOutputs) supplied += sourceOutputs[conn.from.itemName] || 0;
-                    }
-                });
+                const inputKey = `${card.id}:${inputName}`;
+                const supplied = inputSupplies.get(inputKey) || 0;
                 if (supplied < required - 0.001) hasDeficit = true;
             });
 
@@ -133,32 +163,45 @@ export function calculateAndRenderNetworkStatus() {
         });
     }
 
-    // Reset all deficit states before recalculating them.
+    // Reset all deficit states before recalculating them for the visual lines
     state.connections.forEach(conn => conn.isDeficit = false);
     state.placedCards.forEach(card => card.inputDeficits.clear());
     
-    // --- REVISED DEFICIT LOGIC ---
+    // --- FINAL DEFICIT RENDER PASS ---
+    const outputDemands = new Map();
+    state.connections.forEach(conn => {
+        const outputKey = `${conn.from.cardId}:${conn.from.itemName}`;
+        const consumerCard = state.placedCards.get(conn.to.cardId);
+        if (consumerCard) {
+            outputDemands.set(outputKey, (outputDemands.get(outputKey) || 0) + (consumerCard.inputs[conn.to.itemName] || 0));
+        }
+    });
 
-    // 1. Calculate the total effective supply for each individual input node by summing all incoming connections.
     const inputSupplies = new Map();
     state.placedCards.forEach(card => {
         Object.keys(card.inputs).forEach(inputName => {
-            const inputKey = `${card.id}:${inputName}`;
-            inputSupplies.set(inputKey, 0); // Initialize all inputs with 0 supply.
+            inputSupplies.set(`${card.id}:${inputName}`, 0); 
         });
     });
 
     state.connections.forEach(conn => {
+        const outputKey = `${conn.from.cardId}:${conn.from.itemName}`;
         const inputKey = `${conn.to.cardId}:${conn.to.itemName}`;
         const sourceOutputs = effectiveOutputs.get(conn.from.cardId);
         if (sourceOutputs) {
-            const supplyFromThisConnection = sourceOutputs[conn.from.itemName] || 0;
-            const currentTotalSupply = inputSupplies.get(inputKey) || 0;
-            inputSupplies.set(inputKey, currentTotalSupply + supplyFromThisConnection);
+            const totalSupply = sourceOutputs[conn.from.itemName] || 0;
+            const totalDemand = outputDemands.get(outputKey) || 1;
+            const consumerCard = state.placedCards.get(conn.to.cardId);
+            const required = consumerCard ? (consumerCard.inputs[conn.to.itemName] || 0) : 0;
+            
+            let supplied = required;
+            if (totalSupply < totalDemand) {
+                supplied = required * (totalSupply / totalDemand);
+            }
+            inputSupplies.set(inputKey, (inputSupplies.get(inputKey) || 0) + supplied);
         }
     });
 
-    // 2. Identify which unique input nodes are in deficit by comparing total supply to total demand.
     const deficitInputs = new Set();
     state.placedCards.forEach(card => {
         Object.entries(card.inputs).forEach(([inputName, requiredRate]) => {
@@ -166,12 +209,11 @@ export function calculateAndRenderNetworkStatus() {
             const suppliedRate = inputSupplies.get(inputKey) || 0;
             if (suppliedRate < requiredRate - 0.001) {
                 deficitInputs.add(inputKey);
-                card.inputDeficits.add(inputName); // For highlighting the text on the card UI
+                card.inputDeficits.add(inputName); 
             }
         });
     });
 
-    // 3. Mark any connection that feeds into a deficit input as a deficit line.
     state.connections.forEach(conn => {
         const inputKey = `${conn.to.cardId}:${conn.to.itemName}`;
         if (deficitInputs.has(inputKey)) {
@@ -179,7 +221,6 @@ export function calculateAndRenderNetworkStatus() {
         }
     });
 
-    // Update the card UI (the red text for the input name/rate).
     state.placedCards.forEach(card => {
         card.element.querySelectorAll('.io-item[data-input-name]').forEach(el => {
             el.classList.toggle('deficit', card.inputDeficits.has(el.dataset.inputName));
@@ -187,5 +228,4 @@ export function calculateAndRenderNetworkStatus() {
     });
 
     renderConnections();
-
 }
