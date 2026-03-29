@@ -69,7 +69,7 @@ export const recipeData = {
       {name: 'Stun Rebar', inputs: {'Iron Rebar': 10}, outputs: {'Stun Rebar': 5}},
       {name: 'Wire', inputs: {'Copper Ingot': 15}, outputs: {'Wire': 30}},
       {name: 'Cast Screw', inputs: {'Iron Ingot': 12.5}, outputs: {'Screw': 50}, isAlternate: true},
-      {name: 'Iron Pipe', inputs: {'Iron Ingot': 20}, outputs: {'Steel Pipe': 25}, isAlternate: true},
+      {name: 'Iron Pipe', inputs: {'Iron Ingot': 100}, outputs: {'Steel Pipe': 25}, isAlternate: true},
       {name: 'Iron Wire', inputs: {'Iron Ingot': 12.5}, outputs: {'Wire': 22.5}, isAlternate: true},
       {name: 'Steel Rod', inputs: {'Steel Ingot': 12}, outputs: {'Iron Rod': 48}, isAlternate: true}
     ],
